@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+		<link rel="modulepreload" href="./_app/immutable/entry/start.4c5b8132.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/scheduler.e108d1fd.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/singletons.883fa3e5.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.f241aebd.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.0719bd3d.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.a4d6fcb2.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/2.d68d392e.js">
+  </head>
+  <body>
+    <div>  <h1 data-svelte-h="svelte-15ivx6y">Javascript World Generator</h1> 
+			
+			<script>
+				{
+					__sveltekit_ryx72r = {
+						assets: "/javascript-terminal-world-generator",
+						base: new URL(".", location).pathname.slice(0, -1),
+						env: {}
+					};
+
+					const element = document.currentScript.parentElement;
+
+					const data = [null,null];
+
+					Promise.all([
+						import("./_app/immutable/entry/start.4c5b8132.js"),
+						import("./_app/immutable/entry/app.f241aebd.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2],
+							data,
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+  </body>
+</html>
