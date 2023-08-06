@@ -1,5 +1,6 @@
 <script>
-    import { onMount } from "svelte";
+  import { onMount } from "svelte";
+import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
 
   let user = 'world'
   let machine = 'terminal'
@@ -31,8 +32,16 @@
     console.log(event);
   }
 
+  let output = '';
+
   onMount(() => {
     root = document.documentElement;
+    output = new WorldInYourTerminal()
+      .explore()
+      .world
+      .renderMapWithInfo(1)
+
+      console.log(output);
   });
 
 </script>
@@ -43,6 +52,7 @@
 
 <div class="terminal">
 	<div class="output" style="margin-bottom: 1rem;">This is a javascript port of my earlier Ruby World Generator, which was packaged as a ruby gem. This implementation is a web app for the browser, and uses the same world generation algorithms as the original.</div>
+  <div class="output">{output}</div>
 	<p class="prompt">
     {user}@{machine}:
     <span class="terminal-cursor">◐</span>
@@ -54,6 +64,10 @@
   .terminal-cursor {
     animation: blink 1s infinite;
   }
+
+  .output {
+    white-space: pre-line;
+  } 
 
   @keyframes blink {
     0% {

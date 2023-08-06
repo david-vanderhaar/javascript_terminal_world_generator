@@ -14,5 +14,8 @@
     "gh-pages": "^5.0.0",
     "svelte": "^4.1.1",
     "vite": "^4.4.7"
+  },
+  "dependencies": {
+    "noisejs": "^2.1.0"
   }
 }
