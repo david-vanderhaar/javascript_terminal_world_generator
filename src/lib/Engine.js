@@ -1,10 +1,13 @@
 class Engine {
-  constructor(prompt, display) {
+  constructor(display) {
     this.running = false;
-    this.prompt = prompt;
     this.display = display;
-    this.world = this.display.world
+    // this.world = this.display.world;
     // this.alerts = new AlertSystem();
+  }
+
+  get world() {
+    return this.display.world;
   }
 
   run() {
@@ -26,7 +29,7 @@ class Engine {
       'r': this.world.regenerate.bind(this.world),
       'z': this.world.zoomIn.bind(this.world),
       'x': this.world.zoomOut.bind(this.world),
-      'n': this.nameWorld,
+      // 'n': this.nameWorld,
       'c': this.world.cycleTheme.bind(this.world),
       // 'e': this.exportToTxt,
       // 'up': this.world.scroll_up,
@@ -37,12 +40,8 @@ class Engine {
   }
 
   keyPrompter(event) {
-    console.log(event);
     const eventKey = event.key;
     const eventName = event.code;
-    console.log(this.getKeyMap());
-    console.log(eventKey);
-    console.log(eventName);
     if (this.getKeyMap()[eventKey]) this.getKeyMap()[eventKey]();
     if (this.getKeyMap()[eventName]) this.getKeyMap()[eventName]();
   }
@@ -63,10 +62,10 @@ class Engine {
     ].join("\n");
   }
 
-  nameWorld() {
-    const new_name = this.prompt.ask('what do people call this world?');
-    this.world.setName(new_name);
-  }
+  // nameWorld() {
+  //   const new_name = this.prompt.ask('what do people call this world?');
+  //   this.world.setName(new_name);
+  // }
 
   defaultAction() {
     return true;

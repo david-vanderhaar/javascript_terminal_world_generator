@@ -1,11 +1,7 @@
-// require 'debug'
-// require 'tty-table'
-// require 'tty-box'
-// require_relative './constants/tile_types.rb'
-// require_relative './constants/themes/black_white.rb'
 import NameGenerator from "./NameGenerator.js";
 import MatrixGenerator from "./MatrixGenerator.js";
 import Constants from "./constants.js";
+import * as Helpers from "./helpers.js";
 
 class Point {
   constructor(x, y, z) {
@@ -20,20 +16,28 @@ class Point {
 }
 
 export default class World {
-  constructor(theme) {
+  constructor({
+    theme = Constants.THEME.BLACK_WHITE,
+    maxScroll = 64,
+    maxZoom = 4
+  }) {
     this.theme = theme;
+    this._maxXyScroll = maxScroll;
+    this._maxZ = maxZoom;
     this.regenerate();
   }
 
   regenerate() {
-    console.log('regenerating');
     this.name = this.initializeName();
-    this.matrix = this.initializeMatrix();
     this.currentPosition = new Point(0, 0, 0);
 
     this.matrixMap = {
-      [this.currentPosition.toString()]: this.matrix
+      [this.currentPosition.toString()]: this.initializeMatrix()
     };
+  }
+
+  get matrix() {
+    return this.matrixMap[this.currentPosition.toString()];
   }
 
   getMatrix() {
@@ -42,7 +46,7 @@ export default class World {
 
   themedMatrix(theme) {
     return this.matrix.map(row =>
-      row.map(tile => theme[tile]['character'] )
+      row.map(tile => theme[tile]['character'])
     );
   }
 
@@ -92,16 +96,16 @@ export default class World {
     ].join("\n");
   }
 
+  renderMap(tileSize) {
+    return this.renderMatrix(this.coloredMatrix(), this.theme, tileSize);
+  }
+
   renderMatrix(matrixToRender, theme, tileSize) {
     return matrixToRender.map((row, y) =>
       row
         .map((tile, x) => tile)
         .join(theme[Constants.TILE_TYPES.NONE]['character'].repeat(tileSize))
     ).join("\n".repeat(tileSize));
-  }
-
-  renderMap(tileSize) {
-    return this.renderMatrix(this.coloredMatrix(), this.theme, tileSize);
   }
 
   worldNameDisplay() {
@@ -206,373 +210,288 @@ export default class World {
   scrollDown() {
     this.scrollDownV2();
   }
+
+  scrollV2(increment_position_method, matrix_selector_method, create_matrix_in_direction_method) {
+    const new_position = increment_position_method(this.currentPosition);
+    const matricies_to_scroll = matrix_selector_method(this.matrixMap, this.currentPosition);
+
+    const scrolled = matricies_to_scroll.map(({ key, value }) => {
+      const matrix_position = this.transformMatrixKeyToPoint(key);
+      const next_position = increment_position_method(matrix_position);
+      const new_key = this.matrixMap[next_position.toString()] ? null : next_position.toString();
+
+      return {
+        key: new_key,
+        value: create_matrix_in_direction_method(value)
+      };
+    });
+
+    const valid_scrolled = scrolled.filter(item => item.key !== null);
+    this.fillMatrixMapWith(valid_scrolled);
+    this.setCurrentPosition(new_position);
+  }
+
+  scrollRightV2() {
+    this.scrollV2(
+      this.incrementXLevel,
+      this.select_matricies_at_x_and_z,
+      this.get_matrix_scrolled_right
+    )
+  }
+
+  scrollLeftV2() {
+    this.scrollV2(
+      this.decrementXLevel,
+      this.select_matricies_at_x_and_z,
+      this.get_matrix_scrolled_left
+    )
+  }
+
+  scrollUpV2() {
+    this.scrollV2(
+      this.incrementYLevel,
+      this.select_matricies_at_y_and_z,
+      this.get_matrix_scrolled_up
+    )
+  }
+
+  scrollDownV2() {
+    this.scrollV2(
+      this.decrementYLevel,
+      this.select_matricies_at_y_and_z,
+      this.get_matrix_scrolled_down
+    )
+  }
+
+  incrementXLevel(position) {
+    return this.addToXLevel(1, position)
+  }
+
+  decrementXLevel(position) {
+    return this.addToXLevel(-1, position)
+  }
+
+  incrementYLevel(position) {
+    return this.addToYLevel(1, position)
+  }
+
+  decrementYLevel(position) {
+    return this.addToYLevel(-1, position)
+  }
+
+  incrementZLevel(position) {
+    return this.addToZLevel(1, position)
+  }
+
+  decrementZLevel(position) {
+    return this.addToZLevel(-1, position)
+  }
+
+  addToXLevel(amount, position) {
+    const new_x = Helpers.clamp(position.x + amount, -this.maxX(), this.maxX())
+
+    return new Point(new_x, position.y, position.z)
+  }
+
+  addToYLevel(amount, position) {
+    const new_y = Helpers.clamp(position.y + amount, -this.maxY(), this.maxY())
+
+    return new Point(position.x, new_y, position.z)
+  }
+
+  addToZLevel(amount, position) {
+    const new_z = Helpers.clamp(position.z + amount, 0, this.maxZ())
+    const zooming_out = this.isZoomingOut(amount)
+
+    return new Point(
+      zooming_out ? 0 : position.x,
+      zooming_out ? 0 : position.y,
+      new_z
+    )
+  }
+
+  isZoomingOut(amount) {
+    return amount < 0;
+  }
+
+  maxX() {
+    return this.scrollable() ? this.maxXYScroll() : 0;
+  }
+
+  maxY() {
+    return this.scrollable() ? this.maxXYScroll() : 0;
+  }
+
+  scrollable() {
+    return this.currentPosition.z >= this.maxZ();
+  }
+
+  maxXYScroll() {
+    return this._maxXyScroll;
+  }
+
+  maxZ() {
+    return this._maxZ;
+  }
+
+  generateNewZoomedInMap(position) {
+    const zoomLength = this.nextMatrixWidth();
+    const unfilledNewMatrix = [];
+    this.matrix.forEach((row, i) => {
+      unfilledNewMatrix.push(this.expandedRow(zoomLength, this.matrix[i]));
+      if (unfilledNewMatrix.length < zoomLength) {
+        unfilledNewMatrix.push(this.newRow(zoomLength));
+      }
+    });
+
+    const filledNewMatrix = this.fillNoneTiles(unfilledNewMatrix);
+    this.matrixMap[position.toString()] = filledNewMatrix;
+  }
+
+  generateNewZoomedOutMap(position) {
+    const newMatrix = [];
+    this.matrix.forEach((row, i) => {
+      if (Helpers.isEven(i)) {
+        const newRow = [];
+        this.matrix[i].forEach((tile, j) => {
+          if (Helpers.isEven(j)) newRow.push(tile);
+        });
+        newMatrix.push(newRow);
+      }
+    });
+
+    this.matrixMap[position.toString()] = newMatrix;
+  }
+
+  getMatrixScrolledRight(matrixToScroll) {
+    const unfilledNewMatrix = this.expandMatrixRight(matrixToScroll);
+    return this.fillNoneTiles(unfilledNewMatrix);
+  }
+
+  getMatrixScrolledLeft(matrixToScroll) {
+    const unfilledNewMatrix = this.expandMatrixLeft(matrixToScroll);
+    return this.fillNoneTiles(unfilledNewMatrix);
+  }
+
+  getMatrixScrolledUp(matrixToScroll) {
+    const unfilledNewMatrix = this.expandMatrixUp(matrixToScroll);
+    return this.fillNoneTiles(unfilledNewMatrix);
+  }
+
+  getMatrixScrolledDown(matrixToScroll) {
+    const unfilledNewMatrix = this.expandMatrixDown(matrixToScroll);
+    return this.fillNoneTiles(unfilledNewMatrix);
+  }
+
+  expandMatrixRight(matrixToExpand) {
+    return matrixToExpand.map((row, y) => {
+      const newRow = row.slice();
+      newRow.shift();
+      newRow.push(Constants.TILE_TYPES.NONE);
+
+      return newRow;
+    });
+  }
+
+  expandMatrixLeft(matrixToExpand) {
+    return matrixToExpand.map((row, y) => {
+      const newRow = row.slice();
+      newRow.pop();
+      newRow.unshift(Constants.TILE_TYPES.NONE);
+
+      return newRow;
+    });
+  }
+
+  expandMatrixUp(matrixToExpand) {
+    const unfilledNewMatrix = [];
+    matrixToExpand.forEach((row, i) => {
+      if (i < this.currentMatrixWidth() - 1) {
+        unfilledNewMatrix.push(row.slice());
+      }
+    });
+
+    unfilledNewMatrix.unshift(this.newRow(this.currentMatrixWidth()));
+    return unfilledNewMatrix;
+  }
+
+  expandMatrixDown(matrixToExpand) {
+    const unfilledNewMatrix = [];
+    matrixToExpand.forEach((row, i) => {
+      if (i > 0) {
+        unfilledNewMatrix.push(row.slice());
+      }
+    });
+
+    unfilledNewMatrix.push(this.newRow(this.currentMatrixWidth()));
+    return unfilledNewMatrix;
+  }
+
+  expandedRow(zoomLength, currentRow) {
+    const newRow = [];
+    currentRow.forEach((row, i) => {
+      newRow.push(currentRow[i]);
+      if (newRow.length < zoomLength) {
+        newRow.push(Constants.TILE_TYPES.NONE);
+      }
+    });
+
+    return newRow;
+  }
+
+  newRow(zoomLength) {
+    return Array(zoomLength).fill(Constants.TILE_TYPES.NONE);
+  }
+
+  fillNoneTiles(unfilledMatrix) {
+    const newMatrix = [];
+    unfilledMatrix.forEach((row, y) => {
+      const newRow = [];
+      row.forEach((tile, x) => {
+        let newTile = tile;
+        if (tile === Constants.TILE_TYPES.NONE) {
+          const neighboringTiles = this.getTilesInNeighboringPositions(x, y, unfilledMatrix);
+          const filledTiles = neighboringTiles.filter(tile => ![Constants.TILE_TYPES.NONE].includes(tile));
+          const randomNeighborTile = Helpers.sample(filledTiles);
+          if (randomNeighborTile !== Constants.TILE_TYPES.NONE) newTile = randomNeighborTile
+          else newTile = Constants.TILE_TYPES.sample()
+        }
+
+        newRow.push(newTile);
+      });
+
+      newMatrix.push(newRow);
+    });
+
+    return newMatrix;
+  }
+
+  getTilesInNeighboringPositions(x, y, currentMatrix) {
+    const relativeNeighboringPositions = [
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+      { x: 0, y: -1 },
+      { x: 0, y: 1 },
+      { x: -1, y: -1 },
+      { x: 1, y: 1 },
+      { x: 1, y: -1 },
+      { x: -1, y: 1 },
+    ]
+
+    const neighboringTiles = [];
+    relativeNeighboringPositions.forEach(pos => {
+      const tile = this.getTileAtPosition(x + pos.x, y + pos.y, currentMatrix);
+      if (tile) neighboringTiles.push(tile);
+    });
+
+    return neighboringTiles;
+  }
+
+  getTileAtPosition(x, y, currentMatrix) {
+    try {
+      return currentMatrix[y][x];
+    } catch (e) {
+      return false;
+    }
+  }
 }
-
-// to be converted from ruby to js
-// def scroll_v2(
-//   increment_position_method,
-//   matrix_selector_method, 
-//   create_matrix_in_direction_method
-// )
-//   new_position = method(increment_position_method).call(@current_position)
-//   new_x = new_position.x
-
-//   matricies_to_scroll = method(matrix_selector_method).call(
-//       @matrix_map,
-//       @current_position
-//   )
-
-//   scrolled = matricies_to_scroll.map do |key, value|
-//       matrix_position = transform_matrix_key_to_point(key)
-//       next_position = method(increment_position_method).call(matrix_position)
-//       new_key = @matrix_map[next_position.to_s]
-//           .nil? ? next_position.to_s : nil
-
-//       {
-//           key: new_key, 
-//           value: method(create_matrix_in_direction_method).call(value)
-//       }
-//   end
-
-//   valid_scrolled = scrolled.reject{|item| item[:key].nil?}
-//   fill_matrix_map_with(valid_scrolled)
-//   set_current_position(new_position)
-// end
-
-// def scroll_right_v2
-//   scroll_v2(
-//       :increment_x_level,
-//       :select_matricies_at_x_and_z,
-//       :get_matrix_scrolled_right
-//   )
-// end
-
-// def scroll_left_v2
-//   scroll_v2(
-//       :decrement_x_level,
-//       :select_matricies_at_x_and_z,
-//       :get_matrix_scrolled_left
-//   )
-// end
-
-// def scroll_up_v2
-//   scroll_v2(
-//       :increment_y_level,
-//       :select_matricies_at_y_and_z,
-//       :get_matrix_scrolled_up
-//   )
-// end
-
-// def scroll_down_v2
-//   scroll_v2(
-//       :decrement_y_level,
-//       :select_matricies_at_y_and_z,
-//       :get_matrix_scrolled_down
-//   )
-// end
-
-// def scroll_right_v1
-//   new_position = increment_x_level(@current_position)
-//   if !matrix_exists_in_position(new_position)
-//       generate_new_scrolled_right_map(new_position)
-//   end
-
-//   @current_position = new_position
-// end
-
-// def scroll_left_v1
-//   new_position = decrement_x_level(@current_position)
-//   if !matrix_exists_in_position(new_position)
-//       generate_new_scrolled_left_map(new_position)
-//   end
-
-//   @current_position = new_position
-// end
-
-// def scroll_up_v1
-//   new_position = increment_y_level(@current_position)
-//   if !matrix_exists_in_position(new_position)
-//       generate_new_scrolled_up_map(new_position)
-//   end
-
-//   @current_position = new_position
-// end
-
-// def scroll_down_v1
-//   new_position = decrement_y_level(@current_position)
-//   if !matrix_exists_in_position(new_position)
-//       generate_new_scrolled_down_map(new_position)
-//   end
-
-//   @current_position = new_position
-// end
-
-// def increment_x_level(position)
-//   add_to_x_level(1, position)
-// end
-
-// def decrement_x_level(position)
-//   add_to_x_level(-1, position)
-// end
-
-// def increment_y_level(position)
-//   add_to_y_level(1, position)
-// end
-
-// def decrement_y_level(position)
-//   add_to_y_level(-1, position)
-// end
-
-// def increment_z_level(position)
-//   add_to_z_level(1, position)
-// end
-
-// def decrement_z_level(position)
-//   add_to_z_level(-1, position)
-// end
-
-// def add_to_x_level(amount, position)
-//   new_x = (position.x + amount).clamp(-max_x, max_x)
-  
-//   Point.new(
-//       new_x,
-//       position.y,
-//       position.z,
-//   )
-// end
-
-// def add_to_y_level(amount, position)
-//   new_y = (position.y + amount).clamp(-max_y, max_y)
-  
-//   Point.new(
-//       position.x,
-//       new_y,
-//       position.z,
-//   )
-// end
-
-// def add_to_z_level(amount, position)
-//   new_z = (position.z + amount).clamp(0, max_z)
-//   zooming_out = zooming_out?(amount)
-  
-//   Point.new(
-//       zooming_out ? 0 : position.x,
-//       zooming_out ? 0 : position.y,
-//       new_z,
-//   )
-// end
-
-// def zooming_out?(amount)
-//   return true if amount < 0
-
-//   false
-// end
-
-// def max_x
-//   scrollable? ? max_xy_scroll : 0
-// end
-
-// def max_y
-//   scrollable? ? max_xy_scroll : 0
-// end
-
-// def scrollable?
-//   @current_position.z >= max_z
-// end
-
-// def max_xy_scroll
-//   64
-// end
-
-// def max_z 
-//   4
-// end
-
-// def generate_new_zoomed_in_map(position)
-//   zoom_length = next_matrix_width
-//   unfilled_new_matrix = []
-//   matrix.each_with_index{ |row, i|
-//       unfilled_new_matrix << expanded_row(zoom_length, matrix[i])
-//       if unfilled_new_matrix.length < zoom_length
-//           unfilled_new_matrix << new_row(zoom_length)
-//       end
-//     }
-  
-//   filled_new_matrix = fill_none_tiles(unfilled_new_matrix)
-
-//   @matrix_map[position.to_s] = filled_new_matrix
-// end
-
-// def generate_new_zoomed_out_map(position)
-//   new_matrix = []
-//   matrix.each_with_index{ |row, i|
-//       if i.even?
-//           new_row = []
-//           matrix[i].each_with_index{ |tile, j|
-//               new_row << tile if j.even?
-//           }
-//           new_matrix << new_row
-//       end
-//     }
-  
-//   @matrix_map[position.to_s] = new_matrix
-// end
-
-// def generate_new_perlin_matrix_with_offset(position)
-//   new_matrix = GenerateMatrix.new.perlin_matrix(
-//       current_matrix_width,
-//       offset: {x: position.x, y: position.y}
-//   )
-
-//   @matrix_map[position.to_s] = new_matrix
-// end
-
-// def get_matrix_scrolled_right(matrix_to_scroll)
-//   unfilled_new_matrix = expand_matrix_right(matrix_to_scroll)
-//   fill_none_tiles(unfilled_new_matrix)
-// end
-
-// def get_matrix_scrolled_left(matrix_to_scroll)
-//   unfilled_new_matrix = expand_matrix_left(matrix_to_scroll)
-//   fill_none_tiles(unfilled_new_matrix)
-// end
-
-// def get_matrix_scrolled_up(matrix_to_scroll)
-//   unfilled_new_matrix = expand_matrix_up(matrix_to_scroll)
-//   fill_none_tiles(unfilled_new_matrix)
-// end
-
-// def get_matrix_scrolled_down(matrix_to_scroll)
-//   unfilled_new_matrix = expand_matrix_down(matrix_to_scroll)
-//   fill_none_tiles(unfilled_new_matrix)
-// end
-
-// def generate_new_scrolled_right_map(position)
-//   unfilled_new_matrix = expand_matrix_right(matrix)
-//   filled_new_matrix = fill_none_tiles(unfilled_new_matrix)
-//   @matrix_map[position.to_s] = filled_new_matrix
-// end
-
-// def generate_new_scrolled_left_map(position)
-//   unfilled_new_matrix = expand_matrix_left(matrix)
-//   filled_new_matrix = fill_none_tiles(unfilled_new_matrix)
-//   @matrix_map[position.to_s] = filled_new_matrix
-// end
-
-// def generate_new_scrolled_up_map(position)
-//   unfilled_new_matrix = expand_matrix_up(matrix)
-//   filled_new_matrix = fill_none_tiles(unfilled_new_matrix)
-//   @matrix_map[position.to_s] = filled_new_matrix
-// end
-
-// def generate_new_scrolled_down_map(position)
-//   unfilled_new_matrix = expand_matrix_down(matrix)
-//   filled_new_matrix = fill_none_tiles(unfilled_new_matrix)
-//   @matrix_map[position.to_s] = filled_new_matrix
-// end
-
-// def expand_matrix_right(matrix_to_expand)
-//   matrix_to_expand.dup.map.with_index{ |row, y|
-//       new_row = row.dup
-//       new_row.shift
-//       new_row << Constants::TILE_TYPES[:NONE]
-      
-//       new_row
-//   }
-// end
-
-// def expand_matrix_left(matrix_to_expand)
-//   matrix_to_expand.dup.map.with_index{ |row, y|
-//       new_row = row.dup
-//       new_row.pop
-//       new_row.unshift(Constants::TILE_TYPES[:NONE])
-      
-//       new_row
-//   }
-// end
-
-// def expand_matrix_up(matrix_to_expand)
-//   unfilled_new_matrix = []
-//   matrix_to_expand.dup.map.with_index{ |row, i|
-//       unfilled_new_matrix << row.dup if i < (current_matrix_width() - 1)
-//   }
-
-//   unfilled_new_matrix.unshift(new_row(current_matrix_width()))
-//   unfilled_new_matrix
-// end
-
-// def expand_matrix_down(matrix_to_expand)
-//   unfilled_new_matrix = []
-//   matrix_to_expand.dup.map.with_index{ |row, i|
-//       unfilled_new_matrix << row.dup if i > 0
-//   }
-
-//   unfilled_new_matrix << new_row(current_matrix_width)
-//   unfilled_new_matrix
-// end
-
-// def expanded_row(zoom_length, current_row)
-//   new_row = []
-//   current_row.each_with_index{ |row, i|
-//     new_row << current_row[i]
-//     if new_row.length < zoom_length
-//       new_row << Constants::TILE_TYPES[:NONE]
-//     end
-//   }
-  
-//   new_row
-// end
-
-// def new_row(zoom_length)
-//   return Array.new(zoom_length, Constants::TILE_TYPES[:NONE])
-// end
-
-// def fill_none_tiles(unfilled_matrix)
-//   new_matrix = []
-//   unfilled_matrix.each_with_index { |row, y|
-//       new_row = []
-//       row.each_with_index { |tile, x|
-//           new_tile = tile
-//           if tile == Constants::TILE_TYPES[:NONE]
-//               neighboring_tiles = get_tiles_in_neighboring_positions(x, y, unfilled_matrix);
-//               random_neighbor_tile = neighboring_tiles.select{|tile| ![Constants::TILE_TYPES[:NONE]].include?(tile) }.sample
-//               new_tile = random_neighbor_tile != Constants::TILE_TYPES[:NONE] ? random_neighbor_tile : Constants::TILE_TYPES.sample
-//           end
-
-//           new_row << new_tile
-//       }
-      
-//       new_matrix << new_row
-//   }
-
-//   new_matrix
-// end
-
-// def get_tiles_in_neighboring_positions(x, y, current_matrix)
-//   relative_neighboring_positions = [
-//       {x: -1, y: 0},
-//       {x: 1, y: 0},
-//       {x: 0, y: -1},
-//       {x: 0, y: 1},
-//       {x: -1, y: -1},
-//       {x: 1, y: 1},
-//       {x: 1, y: -1},
-//       {x: -1, y: 1},
-//   ]
-
-//   neighboring_tiles = []
-//   relative_neighboring_positions.map { |pos|
-//       tile = get_tile_at_position(x + pos[:x], y + pos[:y], current_matrix)
-//       neighboring_tiles << tile if tile
-//   }
-
-//   neighboring_tiles
-// end
-
-// def get_tile_at_position(x, y, current_matrix)
-//   begin
-//       return current_matrix[y][x]
-//   rescue => exception
-//       return false
-//   end
-// end

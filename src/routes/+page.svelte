@@ -33,7 +33,7 @@ import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
 
   onMount(() => {
     root = document.documentElement;
-    const {engine} = new WorldInYourTerminal().explore()
+    const {engine} = new WorldInYourTerminal().explore({tileSize: 1, maxZoom: 10})
     engineReference = engine;
     prompter = engine.keyPrompter.bind(engine);
     output = engine.run()
@@ -44,7 +44,6 @@ import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
     // changeTheme();
     prompter(event);
     output = engineReference.run()
-    console.log(output);
   }
 
 
@@ -70,7 +69,7 @@ import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
   }
 
   .output {
-    white-space: pre-line;
+    white-space: pre-wrap;
   } 
 
   @keyframes blink {

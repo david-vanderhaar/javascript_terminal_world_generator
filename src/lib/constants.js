@@ -27,6 +27,16 @@ const BLACK_WHITE = {
     background: 'black',
     foreground: 'white',
   },
+  // [TILE_TYPES.NONE]: {
+  //   character: '.',
+  //   background: 'black',
+  //   foreground: 'white',
+  // },
+  // [TILE_TYPES.WATER]: {
+  //   character: '~',
+  //   background: 'black',
+  //   foreground: 'white',
+  // },
   [TILE_TYPES.FOREST]: {
     character: 't',
     background: 'black',
