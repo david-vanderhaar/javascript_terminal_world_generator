@@ -55,8 +55,9 @@ export default class World {
   }
 
   initializeMatrix() {
-    return new MatrixGenerator().twoLandsMatrix()
-    // return new MatrixGenerator().perlinMatrix(4);
+    // return new MatrixGenerator().twoLandsMatrix()
+    const seed = Math.random();
+    return new MatrixGenerator().noiseMatrix(seed, 4);
   }
 
   initializeName() {

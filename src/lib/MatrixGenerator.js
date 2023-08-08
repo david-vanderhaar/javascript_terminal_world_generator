@@ -1,8 +1,6 @@
 import { Noise } from 'noisejs';
 import { TILE_TYPES } from './constants';
 
-const noise = new Noise(Math.random());
-
 export default class MatrixGenerator {
     twoLandsMatrix() {
         return [
@@ -22,22 +20,23 @@ export default class MatrixGenerator {
         ];
     }
 
-    perlinMatrix(size, offset = { x: 0, y: 0 }) {
-        const perlinMatrix = [];
+    noiseMatrix(seed, size, offset = { x: 0, y: 0 }) {
+        const noise = new Noise(seed);
+        const noiseMatrix = [];
         const offset_x = offset.x;
         const offset_y = offset.y;
 
         for (let x = 0; x < size; x++) {
             const row = [];
             for (let y = 0; y < size; y++) {
-                const n = noise.perlin2((offset_x + x) * this.step(), (offset_y + y) * this.step());
+                const n = noise.simplex2((offset_x + x) * this.step(), (offset_y + y) * this.step());
                 const contrasted = this.contrast(n);
                 row.push(this.bar(contrasted));
             }
-            perlinMatrix.push(row);
+            noiseMatrix.push(row);
         }
 
-        return perlinMatrix;
+        return noiseMatrix;
     }
 
     step() {
@@ -45,7 +44,7 @@ export default class MatrixGenerator {
     }
 
     contrast(value) {
-        return Math.pow(value, 2);
+        return (value + 1) / 2;
     }
 
     bars() {
