@@ -8,10 +8,12 @@ class Engine {
   }
 
   run() {
-    this.display.draw();
-    // this.showKeyPrompts();
+    return [
+      this.display.draw(),
+      this.showKeyPrompts(),
+    ].join("\n")
 
-    // this.initializeKeyPrompt();
+    
     // while (this.isRunning()) {
     //   this.display.draw();
     //   // this.alerts.draw();
@@ -19,14 +21,13 @@ class Engine {
     // }
   }
 
-  get keyMap() {
+  getKeyMap() {
     return {
-      'q': this.stop,
-      'r': this.world.regenerate,
-      'z': this.world.zoom_in,
-      'x': this.world.zoom_out,
+      'r': this.world.regenerate.bind(this.world),
+      'z': this.world.zoomIn.bind(this.world),
+      'x': this.world.zoomOut.bind(this.world),
       'n': this.nameWorld,
-      'c': this.world.cycle_theme,
+      'c': this.world.cycleTheme.bind(this.world),
       // 'e': this.exportToTxt,
       // 'up': this.world.scroll_up,
       // 'down': this.world.scroll_down,
@@ -35,17 +36,19 @@ class Engine {
     };
   }
 
-  initializeKeyPrompt() {
-    this.prompt.on('keypress', event => {
-      const eventKey = event.value;
-      const eventName = event.key.name;
-      if (this.keyMap[eventKey]) this.keyMap[eventKey]();
-      if (this.keyMap[eventName]) this.keyMap[eventName]();
-    });
+  keyPrompter(event) {
+    console.log(event);
+    const eventKey = event.key;
+    const eventName = event.code;
+    console.log(this.getKeyMap());
+    console.log(eventKey);
+    console.log(eventName);
+    if (this.getKeyMap()[eventKey]) this.getKeyMap()[eventKey]();
+    if (this.getKeyMap()[eventName]) this.getKeyMap()[eventName]();
   }
 
   showKeyPrompts() {
-    this.prompt.keypress([
+    return [
       '',
       "-----------------------",
       "r to generate new world",
@@ -57,7 +60,7 @@ class Engine {
       // "e to save this world in text",
       // "q to quit",
       "",
-    ].join("\n"));
+    ].join("\n");
   }
 
   nameWorld() {
@@ -67,27 +70,6 @@ class Engine {
 
   defaultAction() {
     return true;
-  }
-
-  start() {
-    if (this.isRunning()) {
-      throw new Error('Engine already running');
-    }
-
-    this.running = true;
-    this.run();
-  }
-
-  stop() {
-    this.running = false;
-  }
-
-  isRunning() {
-    return this.running;
-  }
-
-  isStopped() {
-    return !this.isRunning();
   }
 }
 

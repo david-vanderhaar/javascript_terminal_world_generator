@@ -9,7 +9,7 @@ class Display {
     }
 
     draw() {
-      this.world.draw(this.tileSize());
+      return this.world.draw(this.tileSize());
     }
 
     getScreenSize() {

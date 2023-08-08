@@ -3,14 +3,12 @@ import Display from './Display';
 import Engine from './Engine';
 
 class WorldInYourTerminal {
-    explore() {
+    explore(prompt) {
+        console.log(prompt);
         const display = new Display(40);
-        const prompt = new Prompter();
-
+        // const prompt = new Prompter();
         const engine = new Engine(prompt, display);
-        engine.start();
-
-        return engine;
+        return {engine, display};
     }
 }
 

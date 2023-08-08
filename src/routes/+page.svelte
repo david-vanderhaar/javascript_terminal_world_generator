@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
 import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
+    import Engine from "$lib/Engine.js";
 
   let user = 'world'
   let machine = 'terminal'
@@ -26,23 +27,26 @@ import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
     setVariables(obj);
   }
 
-  
-  function keypress(event) {
-    // changeTheme();
-    console.log(event);
-  }
-
   let output = '';
+  let prompter;
+  let engineReference;
 
   onMount(() => {
     root = document.documentElement;
-    output = new WorldInYourTerminal()
-      .explore()
-      .world
-      .renderMapWithInfo(1)
-
-      console.log(output);
+    const {engine} = new WorldInYourTerminal().explore()
+    engineReference = engine;
+    prompter = engine.keyPrompter.bind(engine);
+    output = engine.run()
   });
+
+    
+  function handleKeypress(event) {
+    // changeTheme();
+    prompter(event);
+    output = engineReference.run()
+    console.log(output);
+  }
+
 
 </script>
 
@@ -58,7 +62,7 @@ import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
     <span class="terminal-cursor">◐</span>
   </p>
 </div>
-<svelte:window on:keydown={keypress} />
+<svelte:window on:keydown={handleKeypress} />
 
 <style>
   .terminal-cursor {

@@ -26,6 +26,7 @@ export default class World {
   }
 
   regenerate() {
+    console.log('regenerating');
     this.name = this.initializeName();
     this.matrix = this.initializeMatrix();
     this.currentPosition = new Point(0, 0, 0);
@@ -78,7 +79,7 @@ export default class World {
   }
 
   draw(tileSize) {
-    console.log(this.renderMapWithInfo(tileSize));
+    return this.renderMapWithInfo(tileSize);
   }
 
   renderMapWithInfo(tileSize) {
