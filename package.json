@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "preview": "vite build && vite preview",
     "deploy": "touch build/.nojekyll && gh-pages -d build -t true",
     "publish": "npm run build && npm run deploy"
   },

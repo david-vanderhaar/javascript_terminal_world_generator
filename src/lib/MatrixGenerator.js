@@ -1,5 +1,5 @@
 import { Noise } from 'noisejs';
-import { TILE_TYPES } from './constants';
+import { TILE_TYPES } from '$lib/constants';
 
 export default class MatrixGenerator {
     twoLandsMatrix() {

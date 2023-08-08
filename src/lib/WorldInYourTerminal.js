@@ -1,5 +1,5 @@
-import Display from './Display';
-import Engine from './Engine';
+import Display from '$lib/Display';
+import Engine from '$lib/Engine';
 
 class WorldInYourTerminal {
     explore({tileSize = 1, theme = 'DEFAULT', maxZoom = 10, maxScroll = 64}) {

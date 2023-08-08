@@ -1,7 +1,6 @@
 <script>
   import { onMount } from "svelte";
-import WorldInYourTerminal from "../lib/WorldInYourTerminal.js";
-    import Engine from "$lib/Engine.js";
+  import WorldInYourTerminal from "$lib/WorldInYourTerminal.js";
 
   let user = 'world'
   let machine = 'terminal'

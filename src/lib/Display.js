@@ -1,6 +1,6 @@
 
-import Constants from './constants.js';
-import World from './World.js';
+import Constants from '$lib/constants.js';
+import World from '$lib/World.js';
 
 class Display {
     constructor({
