@@ -20,16 +20,17 @@ export default class MatrixGenerator {
         ];
     }
 
-    noiseMatrix(seed, size, offset = { x: 0, y: 0 }) {
+    noiseMatrix(seed, size, offset = { x: 0, y: 0, z: 0}) {
         const noise = new Noise(seed);
         const noiseMatrix = [];
         const offset_x = offset.x;
         const offset_y = offset.y;
+        const offset_z = offset.z || 1;
 
         for (let x = 0; x < size; x++) {
             const row = [];
             for (let y = 0; y < size; y++) {
-                const n = noise.simplex2((offset_x + x) * this.step(), (offset_y + y) * this.step());
+                const n = noise.simplex2((offset_x + x) * (this.step() / offset_z), (offset_y + y) * this.step() / offset_z);
                 const contrasted = this.contrast(n);
                 row.push(this.bar(contrasted));
             }

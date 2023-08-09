@@ -24,6 +24,7 @@ export default class World {
     this.theme = theme;
     this._maxXyScroll = maxScroll;
     this._maxZ = maxZoom;
+    this.seed = Math.random();
     this.regenerate();
   }
 
@@ -56,8 +57,7 @@ export default class World {
 
   initializeMatrix() {
     // return new MatrixGenerator().twoLandsMatrix()
-    const seed = Math.random();
-    return new MatrixGenerator().noiseMatrix(seed, 4);
+    return new MatrixGenerator().noiseMatrix(this.seed, 4);
   }
 
   initializeName() {
@@ -197,26 +197,67 @@ export default class World {
   }
 
   scrollRight() {
-    this.scrollRightV2();
+    // this.scrollRightV2();
+    this.scrollRightV3();
   }
 
   scrollLeft() {
-    this.scrollLeftV2();
+    // this.scrollLeftV2();
+    this.scrollLeftV3();
   }
 
   scrollUp() {
-    this.scrollUpV2();
+    // this.scrollUpV2();
+    this.scrollUpV3();
   }
 
   scrollDown() {
-    this.scrollDownV2();
+    // this.scrollDownV2();
+    this.scrollDownV3();
   }
 
-  scrollV2(increment_position_method, matrix_selector_method, create_matrix_in_direction_method) {
-    const new_position = increment_position_method(this.currentPosition);
-    const matricies_to_scroll = matrix_selector_method(this.matrixMap, this.currentPosition);
+  scrollV3(increment_position_method) {
+    const newPosition = increment_position_method(this.currentPosition);
+    if (!this.matrixExistsInPosition(newPosition)) {
+      const size = this.currentMatrixWidth();
+      const newMatrix = new MatrixGenerator().noiseMatrix(
+        this.seed,
+        size,
+        {x: -newPosition.y, y: newPosition.x, z: newPosition.z},
+      );
+      this.matrixMap[newPosition.toString()] = newMatrix;
+    }
+    this.setCurrentPosition(newPosition);
+  }
 
-    const scrolled = matricies_to_scroll.map(({ key, value }) => {
+  scrollRightV3() {
+    this.scrollV3(this.incrementXLevel.bind(this))
+  }
+
+  scrollLeftV3() {
+    this.scrollV3(this.decrementXLevel.bind(this))
+  }
+
+  scrollUpV3() {
+    this.scrollV3(this.incrementYLevel.bind(this))
+  }
+
+  scrollDownV3() {
+    this.scrollV3(this.decrementYLevel.bind(this))
+  }
+
+  scrollV2(
+    increment_position_method,
+    matrix_selector_method,
+    create_matrix_in_direction_method
+  ) {
+    const new_position = increment_position_method(this.currentPosition);
+    const matricies_to_scroll = Object.entries(matrix_selector_method(
+      this.matrixMap,
+      this.currentPosition
+    ));
+
+    const scrolled = matricies_to_scroll.map(([key, value ]) => {
       const matrix_position = this.transformMatrixKeyToPoint(key);
       const next_position = increment_position_method(matrix_position);
       const new_key = this.matrixMap[next_position.toString()] ? null : next_position.toString();
@@ -234,33 +275,33 @@ export default class World {
 
   scrollRightV2() {
     this.scrollV2(
-      this.incrementXLevel,
-      this.select_matricies_at_x_and_z,
-      this.get_matrix_scrolled_right
+      this.incrementXLevel.bind(this),
+      this.selectMatricesAtXAndZ.bind(this),
+      this.getMatrixScrolledRight.bind(this)
     )
   }
 
   scrollLeftV2() {
     this.scrollV2(
-      this.decrementXLevel,
-      this.select_matricies_at_x_and_z,
-      this.get_matrix_scrolled_left
+      this.decrementXLevel.bind(this),
+      this.selectMatricesAtXAndZ.bind(this),
+      this.getMatrixScrolledLeft.bind(this)
     )
   }
 
   scrollUpV2() {
     this.scrollV2(
-      this.incrementYLevel,
-      this.select_matricies_at_y_and_z,
-      this.get_matrix_scrolled_up
+      this.incrementYLevel.bind(this),
+      this.selectMatricesAtYAndZ.bind(this),
+      this.getMatrixScrolledUp.bind(this)
     )
   }
 
   scrollDownV2() {
     this.scrollV2(
-      this.decrementYLevel,
-      this.select_matricies_at_y_and_z,
-      this.get_matrix_scrolled_down
+      this.decrementYLevel.bind(this),
+      this.selectMatricesAtYAndZ.bind(this),
+      this.getMatrixScrolledDown.bind(this)
     )
   }
 
@@ -324,7 +365,9 @@ export default class World {
   }
 
   scrollable() {
-    return this.currentPosition.z >= this.maxZ();
+    return false
+    // return this.currentPosition.z == 0;
+    // return this.currentPosition.z >= this.maxZ();
   }
 
   maxXYScroll() {

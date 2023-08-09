@@ -27,25 +27,20 @@
   }
 
   let output = '';
-  let prompter;
   let engineReference;
 
   onMount(() => {
     root = document.documentElement;
     const {engine} = new WorldInYourTerminal().explore({tileSize: 1, maxZoom: 10})
     engineReference = engine;
-    prompter = engine.keyPrompter.bind(engine);
     output = engine.run()
   });
 
     
   function handleKeypress(event) {
-    // changeTheme();
-    prompter(event);
+    engineReference.onKeypress(event);
     output = engineReference.run()
   }
-
-
 </script>
 
 <svelte:head>
