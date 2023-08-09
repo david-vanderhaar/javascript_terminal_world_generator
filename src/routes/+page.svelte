@@ -50,10 +50,10 @@
 <div class="terminal">
 	<div class="output" style="margin-bottom: 1rem;">This is a javascript port of my earlier Ruby World Generator, which was packaged as a ruby gem. This implementation is a web app for the browser, and uses the same world generation algorithms as the original.</div>
   <div class="output map">{output}</div>
-	<p class="prompt">
+	<!-- <p class="prompt">
     {user}@{machine}:
     <span class="terminal-cursor">◐</span>
-  </p>
+  </p> -->
 </div>
 <svelte:window on:keydown={handleKeypress} />
 

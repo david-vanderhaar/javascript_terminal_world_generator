@@ -94,7 +94,7 @@ export default class World {
       this.worldNameDisplay(),
       this.zoomLevelDisplay(),
       this.coordinatesDisplay()
-    ].join("\n");
+    ].join("\r\n");
   }
 
   renderMap(tileSize) {
@@ -106,7 +106,7 @@ export default class World {
       row
         .map((tile, x) => tile)
         .join(theme[Constants.TILE_TYPES.NONE]['character'].repeat(tileSize))
-    ).join("\n".repeat(tileSize));
+    ).join("\r\n".repeat(tileSize));
   }
 
   worldNameDisplay() {
