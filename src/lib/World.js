@@ -29,6 +29,7 @@ export default class World {
   }
 
   regenerate() {
+    this.seed = Math.random();
     this.name = this.initializeName();
     this.currentPosition = new Point(0, 0, 0);
 
