@@ -103,6 +103,8 @@
   }
 
   :root {
+    --console-color: #14fdce;
+    --console-bg: #031e11;
     --color-bg: #100D23;
     --color-text-primary: #00FF9C;
     --color-text-secondary: #c592ff;
@@ -194,17 +196,6 @@
     border: 1px solid rgba(255, 255, 255, .2);
   }
 
-  :root {
-    --console-color: #14fdce;
-    --console-bg: #031e11;
-    --color-text-secondary: #c592ff;
-    --color-output: #c592ff;
-    --color-prompt: #00FF9C;
-    --color-input: #00FF9C;
-    --color-link: #dddddd;
-    --color-link-border: #d0d0d0;
-  }
-
   * {
     box-sizing: border-box;
   }
@@ -215,11 +206,7 @@
     left: 0;
     top: 0;
     width: 100%;
-  }
-
-
-  .noclick {
-    pointer-events: none;
+    overflow: auto;
   }
 
 
@@ -269,7 +256,8 @@
         rgba(0, 0, 0, 0.6));
     background-size: 100% 0.3rem;
     border-radius: 2rem;
-    position: absolute;
+    position: fixed;
+    pointer-events: none;
   }
 
 

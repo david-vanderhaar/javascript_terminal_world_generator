@@ -98,11 +98,17 @@ class Engine {
     return true;
   }
 
+  createFileName(world, extension = 'txt') {
+    const currentTime = new Date();
+    const fileName = `${currentTime.getFullYear()}_${(currentTime.getMonth() + 1).toString().padStart(2, '0')}_${currentTime.getDate().toString().padStart(2, '0')}__${currentTime.getHours().toString().padStart(2, '0')}${currentTime.getMinutes().toString().padStart(2, '0')}${currentTime.getSeconds().toString().padStart(2, '0')}_${world.name.replace(/\s+/g, '_')}.${extension}`;
+
+    return fileName;
+  }
+
   exportToTxt(world, display) {
     const content = world.draw(display.tileSize);
 
-    const currentTime = new Date();
-    const fileName = `${currentTime.getFullYear()}_${(currentTime.getMonth() + 1).toString().padStart(2, '0')}_${currentTime.getDate().toString().padStart(2, '0')}__${currentTime.getHours().toString().padStart(2, '0')}${currentTime.getMinutes().toString().padStart(2, '0')}${currentTime.getSeconds().toString().padStart(2, '0')}_${world.name.replace(/\s+/g, '_')}.txt`;
+    const fileName = this.createFileName(world);
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -139,12 +145,6 @@ class Engine {
     canvas.width = width;
     canvas.height = height;
 
-    console.log('canvas.width, canvas.height');
-    console.log(canvas.width, canvas.height);
-
-    console.log('lines');
-    console.log(lines[0].length, lines.length);
-
     const ctx = canvas.getContext('2d');
 
     // For example, if you have a renderMap method in your Display class
@@ -152,11 +152,12 @@ class Engine {
 
     // Convert canvas content to a data URL
     const dataURL = canvas.toDataURL('image/png');
+    const fileName = this.createFileName(world, 'png');
 
     // Create a link element for downloading
     const link = document.createElement('a');
     link.href = dataURL;
-    link.download = 'world_image.png';
+    link.download = fileName;
     link.textContent = 'Download Image';
 
     // Append the link to the document and simulate click
@@ -165,6 +166,8 @@ class Engine {
 
     // Clean up by removing the link
     document.body.removeChild(link);
+
+    window.alert(`Successfully saved to ${fileName}`);
   }
 
 
