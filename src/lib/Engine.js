@@ -73,6 +73,18 @@ class Engine {
     };
   }
 
+  getKeymapLabel(key) {
+    return {
+      r: "to generate new world",
+      z: "to zoom in",
+      x: "to zoom out",
+      n: "to rename this world",
+      c: "to switch theme",
+      e: "to save this world in text",
+      p: "to save this world as image",
+    }[key]
+  }
+
   showKeyPrompts() {
     return [
       '',

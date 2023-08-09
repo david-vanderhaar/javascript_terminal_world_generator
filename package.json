@@ -17,6 +17,7 @@
     "vite": "^4.4.7"
   },
   "dependencies": {
-    "noisejs": "^2.1.0"
+    "noisejs": "^2.1.0",
+    "svelte-device-info": "^1.0.0"
   }
 }
