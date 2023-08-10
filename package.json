@@ -4,10 +4,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "start": "npm run dev",
     "preview": "vite build && vite preview",
-    "deploy": "touch build/.nojekyll && gh-pages -d build -t true",
-    "publish": "npm run build && npm run deploy"
+    "build": "vite build && npm run build_itch",
+    "build_itch": "zip -r ./builds/itch.zip ./build",
+    "deploy": "npm run deploy_gh_pages && npm run deploy_itch",
+    "deploy_gh_pages": "touch build/.nojekyll && gh-pages -d build -t true",
+    "deploy_itch": "./butler/butler push ./builds/itch.zip classicwook/terminal-world:web",
+    "publish": "npm run build && npm run deploy",
+    "publish_gh": "npm run build && npm run deploy_gh_pages",
+    "publish_itch": "npm run build && npm run deploy_itch"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^2.0.2",
