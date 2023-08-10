@@ -46,14 +46,22 @@ class Engine {
   }
 
   onKeypress(event) {
-    this.handleDefaultKeypress(event)
+    return this.handleDefaultKeypress(event)
   }
 
   handleDefaultKeypress(event) {
     const eventKey = event.key;
     const eventName = event.code;
-    if (this.getKeyMap()[eventKey]) this.getKeyMap()[eventKey]();
-    if (this.getKeyMap()[eventName]) this.getKeyMap()[eventName]();
+    if (this.getKeyMap()[eventKey]) {
+      this.getKeyMap()[eventKey]();
+      return true
+    }
+    if (this.getKeyMap()[eventName]) {
+      this.getKeyMap()[eventName]();
+      return true
+    }
+
+    return false
   }
 
   prompt(message) {

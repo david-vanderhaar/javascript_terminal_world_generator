@@ -32,7 +32,6 @@
   let mobileKeypressOptions = {}
   let isMobileDevice;
   let overlay = true;
-  let terminal;
 
   onMount(() => {
     root = document.documentElement;
@@ -41,7 +40,6 @@
     output = engine.run()
     mobileKeypressOptions = createMobileKeypressOptions(engineReference.getKeyMap());
     isMobileDevice = Device.isMobile
-    terminal = document.querySelector('.terminal');
   });
 
   function createMobileKeypressOptions(keymap) {
@@ -51,29 +49,44 @@
       if (label) {
         options[key] = {
           label,
-          handle: () => handleKeypress({key}),
+          handle: (event) => {
+            animateTargetOfEvent(event);
+            handleKeypress({key})
+          },
         }
       }
     })
     return options;
   }
 
+  function animateTargetOfEvent(event) {
+    event.target.classList.add('crt-flicker');
+    setTimeout(() => {
+      event.target.classList.remove('crt-flicker');
+    }, 300);
+  }
+
   function handleKeypress(event) {
-    engineReference.onKeypress(event);
+    const handled = engineReference.onKeypress(event);
     output = engineReference.run()
+    if (handled) animateTerminal();
   }
 
   function chopFirstNLines(str, n) {
     return str.split('\n').slice(n).join('\n');
   }
 
+
+  let terminalFlicker = false;
   function handleFocus() {
     if (overlay) overlay = false;
+    animateTerminal();
+  }
 
-    // animate the terminal
-    terminal.classList.add('crt-flicker');
+  function animateTerminal() {
+    terminalFlicker = true;
     setTimeout(() => {
-      terminal.classList.remove('crt-flicker');
+      terminalFlicker = false;
     }, 300);
   }
 
@@ -84,13 +97,13 @@
 	<title>World in Your Terminal</title>
 </svelte:head>
 
-<div class="terminal">
+<div class="terminal" class:crt-flicker={terminalFlicker}>
   {#if isMobileDevice}
-  <div class="output output-mobile">
+  <div class="output output-mobile noSelect">
     {#each Object.entries(mobileKeypressOptions) as [key, value]}
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <button on:click={value.handle} class="">{key}: {value.label}</button>
+      <button on:click={value.handle}>{key}: {value.label}</button>
     {/each}
   </div>
   {/if}
@@ -144,6 +157,25 @@
   .output-mobile {
     cursor: pointer;
     /* text-decoration: dashed underline; */
+    /* not selectable */
+    
+  }
+
+  .output-mobile:active, .output-mobile:focus {
+    background-color: var(--color-bg);
+  }
+
+  .noSelect {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+  .noSelect:focus {
+      outline: none !important;
   }
 
   .output-mobile > * {
