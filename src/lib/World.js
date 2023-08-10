@@ -90,11 +90,11 @@ export default class World {
 
   renderMapWithInfo(tileSize) {
     return [
-      this.renderMap(tileSize),
-      "",
       this.worldNameDisplay(),
       this.zoomLevelDisplay(),
-      this.coordinatesDisplay()
+      this.coordinatesDisplay(),
+      "",
+      this.renderMap(tileSize),
     ].join("\r\n");
   }
 

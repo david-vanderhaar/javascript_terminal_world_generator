@@ -36,8 +36,12 @@ class Engine {
 
   run() {
     return [
-      this.display.draw(),
       this.showKeyPrompts(),
+      this.display.draw(),
+      "",
+      "-----------------------",
+      "",
+      "",
     ].join("\r\n")
   }
 
@@ -88,7 +92,6 @@ class Engine {
   showKeyPrompts() {
     return [
       '',
-      "-----------------------",
       "r to generate new world",
       this.world.scrollable() ? "arrow keys to explore" : "",
       "z to zoom in",
@@ -97,6 +100,7 @@ class Engine {
       // "c to switch theme",
       "e to save this world in text",
       "p to save this world as image",
+      "-----------------------",
       "",
     ].join("\r\n");
   }
@@ -151,7 +155,7 @@ class Engine {
     const worldNameDisplayLength = world.worldNameDisplay().length * fontSize;
     const width = Math.max(
       worldNameDisplayLength,
-      lines[0].length * fontSize * 0.6
+      lines.at(-1).length * fontSize * 0.6
     ) + (padding * 2);
     const height = (lines.length * lineHeight) + (padding * 2);
     canvas.width = width;
