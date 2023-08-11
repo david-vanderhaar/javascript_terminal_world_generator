@@ -17,7 +17,7 @@ class Point {
 
 export default class World {
   constructor({
-    theme = Constants.THEME.BLACK_WHITE,
+    theme = Constants.THEME.DEFAULT,
     maxScroll = 64,
     maxZoom = 4
   }) {
@@ -70,8 +70,8 @@ export default class World {
   }
 
   cycleTheme() {
-    const availableThemes = Constants.THEME.constants.map(theme =>
-      Constants.THEME[theme]
+    const availableThemes = Object.keys(Constants.THEME).filter(key => key !== 'DEFAULT').map(themeKey =>
+      Constants.THEME[themeKey]
     );
 
     const currentThemeIndex = availableThemes.indexOf(this.theme);

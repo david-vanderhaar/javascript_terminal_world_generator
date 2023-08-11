@@ -90,7 +90,7 @@
     }, 300);
   }
 
-  $: finalOutput = chopFirstNLines(output, isMobileDevice ? 8 : 1);
+  $: finalOutput = chopFirstNLines(output, isMobileDevice ? 9 : 1);
 </script>
 
 <svelte:head>
