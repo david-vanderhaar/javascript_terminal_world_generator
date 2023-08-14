@@ -76,6 +76,7 @@ class Engine {
       'x': world.zoomOut.bind(world),
       'n': this.nameWorld.bind(this),
       'c': world.cycleTheme.bind(world),
+      'v': this.cycleColorTheme.bind(this),
       'e': () => this.exportToTxt(this.world, this.display),
       'p': () => this.exportToPNG(this.world, this.display),
       'ArrowUp': world.scrollUp.bind(world),
@@ -92,6 +93,7 @@ class Engine {
       x: "to zoom out",
       n: "to rename this world",
       c: "to switch theme",
+      v: "to cycle colors",
       e: "to save this world in text",
       p: "to save this world as image",
     }[key]
@@ -106,6 +108,7 @@ class Engine {
       "x to zoom out",
       "n to rename this world",
       "c to switch theme",
+      "v to cycle colors",
       "e to save this world in text",
       "p to save this world as image",
       "-----------------------",
@@ -215,8 +218,54 @@ class Engine {
     lines.forEach((line, i) => {
       ctx.fillText(line, padding, padding + i * lineHeight);
     });
+  }
+
+  cycleColorTheme() {
+    this.changeTheme();
+  }
+
+  setRootDocumentVariables(variables) {
+    const root = window.document.documentElement;
+    Object.entries(variables).forEach(v => root.style.setProperty(v[0], v[1]));
+  }
+
+  randomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; ++i) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
+  changeTheme() {
+    this.setRootDocumentVariables(COLOR_THEMES[CURRENT_COLOR_THEME]);
+    CURRENT_COLOR_THEME = (CURRENT_COLOR_THEME + 1) % COLOR_THEMES.length;
+  }
 }
 
-}
+let CURRENT_COLOR_THEME = 0;
+const COLOR_THEMES = [
+  {
+    '--color-bg': '#100D23',
+    '--color-output': '#c592ff',
+    '--color-prompt': '#00FF9C',
+  },
+  {
+    '--color-bg': '#1C1A33',
+    '--color-output': '#FF7A00',
+    '--color-prompt': '#92C5FF',
+  },
+  {
+    '--color-bg': '#17142E',
+    '--color-output': '#FFA600',
+    '--color-prompt': '#FF92C5',
+  },
+  {
+    '--color-bg': '#130F28',
+    '--color-output': '#00B8FF',
+    '--color-prompt': '#FFB400',
+  },
+]
 
 export default Engine;
